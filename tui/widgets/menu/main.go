@@ -18,7 +18,8 @@ const (
 )
 
 var (
-	activeStyle = lipgloss.NewStyle().Foreground(constants.AquaColor)
+	activeStyle = lipgloss.NewStyle().Foreground(constants.AquaColor).Underline(true)
+	titleStyle  = lipgloss.NewStyle().Foreground(constants.BlueColor)
 )
 
 type Model struct {
@@ -38,13 +39,17 @@ type Model struct {
 
 func NewModel(createGameCallback func(), joinGameCallback func()) *Model {
 	title := `
-    __                __               __       __          __  __  __   
-    \ \              / /_  ____ ______/ /_     / /_  ____ _/ /_/ /_/ /__ 
-     \ \            / __ \/ __  / ___/ __ \   / __ \/ __  / __/ __/ / _ \
-     / /           / /_/ / /_/ (__  ) / / /  / /_/ / /_/ / /_/ /_/ /  __/
-    /_/  ______   /_.___/\__,_/____/_/ /_/  /_.___/\__,_/\__/\__/_/\___/ 
-        /_____/                                                          
-    `
+
+   Y88b         888                        888           888               888    888    888          
+	Y88b        888                        888           888               888    888    888          
+	 Y88b       888                        888           888               888    888    888          
+	  Y88b      88888b.   8888b.  .d8888b  88888b.       88888b.   8888b.  888888 888888 888  .d88b.  
+	  d88P      888 "88b     "88b 88K      888 "88b      888 "88b     "88b 888    888    888 d8P  Y8b 
+	 d88P       888  888 .d888888 "Y8888b. 888  888      888  888 .d888888 888    888    888 88888888 
+	d88P        888 d88P 888  888      X88 888  888      888 d88P 888  888 Y88b.  Y88b.  888 Y8b.     
+   d88P         88888P"  "Y888888  88888P' 888  888      88888P"  "Y888888  "Y888  "Y888 888  "Y8888  
+
+	`
 
 	return &Model{
 		title: title,
@@ -108,8 +113,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func formatActiveChoice(choice string) string {
-	withArrows := fmt.Sprintf("> %s <", choice)
-	return fmt.Sprintf("%s\n", activeStyle.Render(withArrows))
+	return fmt.Sprintf("%s\n", activeStyle.Render(choice))
 }
 
 func formatInactiveChoice(choice string) string {
@@ -124,7 +128,7 @@ func (m *Model) View() string {
 
 	var s strings.Builder
 
-	title := lipgloss.NewStyle().Render(m.title)
+	title := titleStyle.Render(m.title)
 
 	s.WriteString("echo \"Welcome to Bash Battle!\"\n\n")
 
