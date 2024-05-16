@@ -3,11 +3,13 @@ package constants
 import "github.com/charmbracelet/lipgloss"
 
 /* COLORS */
-
+// Credit to Everforest Vim Theme for the colors! -> https://github.com/sainnhe/everforest
 var (
-	PurpleColor = lipgloss.Color("#A3B8EF")
-	BlueColor   = lipgloss.Color("#74C3E4")
-	RedColor    = lipgloss.Color("#EFA6A2")
-	GreenColor  = lipgloss.Color("#80C990")
+	PurpleColor = lipgloss.AdaptiveColor{Light: "#DF69BA", Dark: "#D699B6"}
+	BlueColor   = lipgloss.AdaptiveColor{Light: "#3A94C5", Dark: "#7FBBB3"}
+	RedColor    = lipgloss.AdaptiveColor{Light: "#F85552", Dark: "#E67C80"}
+	OrangeColor = lipgloss.AdaptiveColor{Light: "#F57D26", Dark: "#E69875"}
+	AquaColor   = lipgloss.AdaptiveColor{Light: "#35A77C", Dark: "#83C092"}
+	GreenColor  = lipgloss.AdaptiveColor{Light: "#8DA101", Dark: "#A7C080"}
 	GrayColor   = lipgloss.Color("243")
 )
