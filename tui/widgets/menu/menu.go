@@ -18,7 +18,7 @@ const (
 )
 
 var (
-	activeStyle = lipgloss.NewStyle().Foreground(constants.GreenColor)
+	activeStyle = lipgloss.NewStyle().Foreground(constants.AquaColor)
 )
 
 type Model struct {

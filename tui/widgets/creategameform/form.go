@@ -2,35 +2,18 @@ package creategameform
 
 import (
 	"errors"
+	"strconv"
 	"unicode"
 
-	"github.com/charmbracelet/bubbles/help"
-	"github.com/charmbracelet/bubbles/key"
-	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/huh"
-	"github.com/charmbracelet/lipgloss"
 	"github.com/maria-mz/bash-battle/tui/constants"
 )
 
-var (
-	titleStyle = lipgloss.NewStyle().PaddingLeft(2).PaddingBottom(1).PaddingTop(1).Foreground(constants.GreenColor)
-	formStyle  = lipgloss.NewStyle().PaddingLeft(2).PaddingBottom(1)
-	helpStyle  = lipgloss.NewStyle().PaddingLeft(2)
+const (
+	ROUNDS_KEY    = "rounds"
+	ROUND_DUR_KEY = "roundDuration"
+	CONFIRM_KEY   = "done"
 )
-
-type Model struct {
-	title string
-
-	form *huh.Form
-
-	keys keyMap
-	help help.Model
-
-	menuCallback func()
-
-	width  int
-	height int
-}
 
 func isInputEmpty(s string) bool {
 	return len(s) == 0
@@ -43,6 +26,31 @@ func isInputNumeric(s string) bool {
 		}
 	}
 	return true
+}
+
+func isGreaterThanZero(s string) (bool, error) {
+	n, err := strconv.Atoi(s)
+	if err != nil {
+		return false, err
+	}
+	return n > 0, nil
+}
+
+func validateNumericInput(s string) error {
+	if isInputEmpty(s) {
+		return errors.New("field cannot be empty")
+	}
+
+	if !isInputNumeric(s) {
+		return errors.New("not a valid number")
+	}
+
+	isGreater, _ := isGreaterThanZero(s)
+
+	if !isGreater {
+		return errors.New("must be greater than zero")
+	}
+	return nil
 }
 
 func getFormTheme() *huh.Theme {
@@ -62,38 +70,22 @@ func newForm() *huh.Form {
 	form := huh.NewForm(
 		huh.NewGroup(
 			huh.NewInput().
-				Key("rounds").
+				Key(ROUNDS_KEY).
 				Title("Number of rounds").
 				Placeholder("Enter a number").
-				Validate(func(s string) error {
-					if isInputEmpty(s) {
-						return errors.New("field cannot be empty")
-					}
-					if !isInputNumeric(s) {
-						return errors.New("not a valid number")
-					}
-					return nil
-				}).
+				Validate(validateNumericInput).
 				CharLimit(2),
 			huh.NewInput().
-				Key("roundDuration").
+				Key(ROUND_DUR_KEY).
 				Title("Round duration (minutes)").
 				Placeholder("Enter a number").
-				Validate(func(s string) error {
-					if isInputEmpty(s) {
-						return errors.New("field cannot be empty")
-					}
-					if !isInputNumeric(s) {
-						return errors.New("not a valid number")
-					}
-					return nil
-				}).
+				Validate(validateNumericInput).
 				CharLimit(2),
 			huh.NewConfirm().
-				Key("done").
+				Key(CONFIRM_KEY).
 				Title("Create game?").
 				Description(
-					"Entering 'Yes' should create a new game on the server. \n"+
+					"Selecting 'Yes' should create a new game on the server. \n"+
 						"You should shortly receive a code that others can use "+
 						"to join the game.",
 				).
@@ -106,79 +98,4 @@ func newForm() *huh.Form {
 	form.WithTheme(getFormTheme())
 
 	return form
-}
-
-func NewModel(menuCallback func()) *Model {
-	m := &Model{}
-
-	m.title = "▒▒▒▒ Create Game"
-
-	m.form = newForm()
-	m.help = help.New()
-	m.keys = keys
-
-	m.menuCallback = menuCallback
-
-	return m
-}
-
-func (m *Model) Init() tea.Cmd {
-	return m.form.Init()
-}
-
-func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	switch msg := msg.(type) {
-	case tea.WindowSizeMsg:
-		m.width = msg.Width
-		m.height = msg.Height
-
-	case tea.KeyMsg:
-		switch {
-		case key.Matches(msg, m.keys.Quit):
-			return m, tea.Quit
-		case key.Matches(msg, m.keys.Help):
-			m.help.ShowAll = !m.help.ShowAll
-		case key.Matches(msg, m.keys.Menu):
-			m.clearForm()
-			m.menuCallback()
-			return m, nil
-		}
-		// Next and Back cases are handled by the form
-	}
-
-	var cmds []tea.Cmd
-
-	// Process the form
-	form, cmd := m.form.Update(msg)
-	if f, ok := form.(*huh.Form); ok {
-		m.form = f
-		cmds = append(cmds, cmd)
-	}
-
-	return m, tea.Batch(cmds...)
-}
-
-func (m *Model) View() string {
-	if m.width == 0 {
-		// Dimensions haven't been set yet, no view -> empty string
-		return ""
-	}
-
-	switch m.form.State {
-	case huh.StateCompleted:
-		// TODO: do things
-		return "form complete"
-	default:
-		return lipgloss.JoinVertical(
-			lipgloss.Left,
-			titleStyle.Render(m.title),
-			formStyle.Render(m.form.View()),
-			helpStyle.Render(m.help.View(m.keys)),
-		)
-	}
-}
-
-func (m *Model) clearForm() {
-	m.form = newForm()
-	m.form.Init()
 }
