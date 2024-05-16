@@ -13,16 +13,21 @@ import (
 )
 
 var (
-	titleStyle = lipgloss.NewStyle().PaddingLeft(2).PaddingBottom(1).PaddingTop(1).Foreground(constants.Color_MintMain)
+	titleStyle = lipgloss.NewStyle().PaddingLeft(2).PaddingBottom(1).PaddingTop(1).Foreground(constants.GreenColor)
 	formStyle  = lipgloss.NewStyle().PaddingLeft(2).PaddingBottom(1)
 	helpStyle  = lipgloss.NewStyle().PaddingLeft(2)
 )
 
 type Model struct {
-	title  string
-	form   *huh.Form
-	keys   keyMap
-	help   help.Model
+	title string
+
+	form *huh.Form
+
+	keys keyMap
+	help help.Model
+
+	menuCallback func()
+
 	width  int
 	height int
 }
@@ -43,9 +48,9 @@ func isInputNumeric(s string) bool {
 func getFormTheme() *huh.Theme {
 	t := huh.ThemeBase()
 
-	t.Focused.Title = t.Focused.Title.Foreground(constants.Color_BlueSecondary)
-	t.Focused.ErrorMessage = t.Focused.ErrorMessage.Foreground(constants.Color_RedWarn)
-	t.Focused.Description = t.Focused.Description.Foreground(constants.Color_Gray)
+	t.Focused.Title = t.Focused.Title.Foreground(constants.BlueColor)
+	t.Focused.ErrorMessage = t.Focused.ErrorMessage.Foreground(constants.RedColor)
+	t.Focused.Description = t.Focused.Description.Foreground(constants.GrayColor)
 
 	t.Blurred.ErrorMessage = t.Focused.ErrorMessage
 	t.Blurred.Description = t.Focused.Description
@@ -53,7 +58,7 @@ func getFormTheme() *huh.Theme {
 	return t
 }
 
-func initForm() *huh.Form {
+func newForm() *huh.Form {
 	form := huh.NewForm(
 		huh.NewGroup(
 			huh.NewInput().
@@ -103,14 +108,16 @@ func initForm() *huh.Form {
 	return form
 }
 
-func NewModel() *Model {
+func NewModel(menuCallback func()) *Model {
 	m := &Model{}
 
 	m.title = "▒▒▒▒ Create Game"
 
-	m.form = initForm()
+	m.form = newForm()
 	m.help = help.New()
 	m.keys = keys
+
+	m.menuCallback = menuCallback
 
 	return m
 }
@@ -131,7 +138,10 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		case key.Matches(msg, m.keys.Help):
 			m.help.ShowAll = !m.help.ShowAll
-			// TODO: return to menu case
+		case key.Matches(msg, m.keys.Menu):
+			m.clearForm()
+			m.menuCallback()
+			return m, nil
 		}
 		// Next and Back cases are handled by the form
 	}
@@ -166,4 +176,9 @@ func (m *Model) View() string {
 			helpStyle.Render(m.help.View(m.keys)),
 		)
 	}
+}
+
+func (m *Model) clearForm() {
+	m.form = newForm()
+	m.form.Init()
 }

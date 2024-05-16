@@ -21,7 +21,7 @@ var keys = keyMap{
 	),
 	Menu: key.NewBinding(
 		key.WithKeys("-"),
-		key.WithHelp("shift+m", "menu"),
+		key.WithHelp("-", "menu"),
 	),
 	Quit: key.NewBinding(
 		key.WithKeys("q", "esc", "ctrl+c"),

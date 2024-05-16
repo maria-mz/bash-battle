@@ -18,8 +18,7 @@ const (
 )
 
 var (
-	activeStyle   = lipgloss.NewStyle().Foreground(constants.Color_MintMain)
-	inactiveStyle = lipgloss.NewStyle().Foreground(constants.Color_Gray)
+	activeStyle = lipgloss.NewStyle().Foreground(constants.GreenColor)
 )
 
 type Model struct {
@@ -109,12 +108,12 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func formatActiveChoice(choice string) string {
-	withArrows := fmt.Sprintf("• %s •", choice)
+	withArrows := fmt.Sprintf("> %s <", choice)
 	return fmt.Sprintf("%s\n", activeStyle.Render(withArrows))
 }
 
 func formatInactiveChoice(choice string) string {
-	return fmt.Sprintf("%s\n", inactiveStyle.Render(choice))
+	return fmt.Sprintf("%s\n", choice)
 }
 
 func (m *Model) View() string {

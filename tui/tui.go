@@ -25,7 +25,7 @@ func NewTui() *Tui {
 	m := &Tui{}
 
 	m.menu = menu.NewModel(m.onMenuCreateGame, m.onMenuJoinGame)
-	m.createGameForm = creategameform.NewModel()
+	m.createGameForm = creategameform.NewModel(m.onMenuReturn)
 	m.currentWidget = currentWidget
 
 	return m
@@ -86,4 +86,8 @@ func (m *Tui) onMenuCreateGame() {
 
 func (m *Tui) onMenuJoinGame() {
 
+}
+
+func (m *Tui) onMenuReturn() {
+	*m.currentWidget = MENU
 }
