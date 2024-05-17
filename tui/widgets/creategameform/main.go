@@ -80,10 +80,8 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	m.updateForm(msg, &cmds)
 
-	if !m.done {
-		if m.form.State == huh.StateCompleted {
-			m.handleFormDone(&cmds)
-		}
+	if !m.done && m.form.State == huh.StateCompleted {
+		m.handleFormDone(&cmds)
 	}
 
 	return m, tea.Batch(cmds...)
