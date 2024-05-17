@@ -21,6 +21,8 @@ type Model struct {
 	help help.Model
 
 	menuCallback func()
+	doneCallback func(string, string)
+	done         bool
 
 	width int
 }
@@ -32,7 +34,7 @@ func newSpinner() spinner.Model {
 	return spin
 }
 
-func NewModel(menuCallback func()) *Model {
+func NewModel(menuCallback func(), doneCallback func(string, string)) *Model {
 	return &Model{
 		title:        "▒▒▒▒ Create Game",
 		form:         newForm(),
@@ -40,6 +42,7 @@ func NewModel(menuCallback func()) *Model {
 		keys:         keys,
 		help:         help.New(),
 		menuCallback: menuCallback,
+		doneCallback: doneCallback,
 	}
 }
 
@@ -63,9 +66,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.help.ShowAll = !m.help.ShowAll
 
 		case key.Matches(msg, m.keys.Menu):
-			// Prepare for returning to menu
-			m.form = newForm()
+			m.clearForm()
 			m.menuCallback()
+			m.done = false // reset
 			return m, m.form.Init()
 		}
 
@@ -76,6 +79,12 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	m.updateForm(msg, &cmds)
+
+	if !m.done {
+		if m.form.State == huh.StateCompleted {
+			m.handleFormDone(&cmds)
+		}
+	}
 
 	return m, tea.Batch(cmds...)
 }
@@ -88,11 +97,10 @@ func (m *Model) View() string {
 
 	switch m.form.State {
 	case huh.StateCompleted:
-		if !m.isYesSelected() {
-			// User has selected 'No', nothing to show
-			return ""
+		if wantsToCreateGame(m.form) {
+			return m.getLoadingView()
 		}
-		return m.getLoadingView()
+		return ""
 	default:
 		return m.getFormView()
 	}
@@ -105,22 +113,24 @@ func (m *Model) updateForm(msg tea.Msg, cmds *[]tea.Cmd) {
 		m.form = f
 		*cmds = append(*cmds, cmd)
 	}
-
-	if m.form.State == huh.StateCompleted {
-		if !m.isYesSelected() {
-			// User has selected 'No', return to menu
-			m.form = newForm()
-			m.menuCallback()
-			*cmds = append(*cmds, m.form.Init())
-		} else {
-			// Start the ticker!
-			*cmds = append(*cmds, m.spinner.Tick)
-		}
-	}
 }
 
-func (m *Model) isYesSelected() bool {
-	return m.form.GetBool(CONFIRM_KEY)
+func (m *Model) handleFormDone(cmds *[]tea.Cmd) {
+	if wantsToCreateGame(m.form) {
+		m.doneCallback(getRounds(m.form), getRoundMinutes(m.form))
+		m.done = true
+		*cmds = append(*cmds, m.spinner.Tick)
+		return
+	}
+
+	m.clearForm()
+	m.menuCallback()
+	m.done = false // reset
+	*cmds = append(*cmds, m.form.Init())
+}
+
+func (m *Model) clearForm() {
+	m.form = newForm()
 }
 
 func (m *Model) getFormView() string {

@@ -6,7 +6,6 @@ require (
 	github.com/charmbracelet/bubbles v0.18.0
 	github.com/charmbracelet/bubbletea v0.26.1
 	github.com/charmbracelet/huh v0.3.0
-	github.com/charmbracelet/huh/spinner v0.0.0-20240508140610-13957916abf0
 	github.com/charmbracelet/lipgloss v0.10.1-0.20240506202754-3ee5dcab73cb
 	github.com/maria-mz/bash-battle-proto v0.0.0-20240514035245-f2ca3d40f96c
 	google.golang.org/grpc v1.64.0

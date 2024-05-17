@@ -1,6 +1,8 @@
 package tui
 
 import (
+	"log"
+
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/maria-mz/bash-battle/tui/widgets/creategameform"
 	"github.com/maria-mz/bash-battle/tui/widgets/menu"
@@ -14,7 +16,8 @@ const (
 )
 
 type Tui struct {
-	currentWidget  *Widget
+	currentWidget *Widget
+
 	menu           tea.Model
 	createGameForm tea.Model
 }
@@ -23,10 +26,9 @@ func NewTui() *Tui {
 	var currentWidget = new(Widget)
 
 	m := &Tui{}
-
-	m.menu = menu.NewModel(m.onMenuCreateGame, m.onMenuJoinGame)
-	m.createGameForm = creategameform.NewModel(m.onMenuReturn)
 	m.currentWidget = currentWidget
+	m.menu = menu.NewModel(m.onMenuCreateGame, m.onMenuJoinGame)
+	m.createGameForm = creategameform.NewModel(m.onMenuReturn, m.onCreateGame)
 
 	return m
 }
@@ -90,4 +92,8 @@ func (m *Tui) onMenuJoinGame() {
 
 func (m *Tui) onMenuReturn() {
 	*m.currentWidget = MENU
+}
+
+func (m *Tui) onCreateGame(rounds string, roundMinutes string) {
+	log.Printf("create game called, rounds: %s, roundMinutes: %s", rounds, roundMinutes)
 }

@@ -10,7 +10,7 @@ var (
 			PaddingLeft(2).
 			PaddingBottom(1).
 			PaddingTop(1).
-			Foreground(constants.AquaColor)
+			Foreground(constants.GreenColor)
 	formStyle    = lipgloss.NewStyle().PaddingLeft(2).PaddingBottom(1)
 	spinnerStyle = lipgloss.NewStyle().Foreground(constants.PurpleColor)
 	helpStyle    = lipgloss.NewStyle().PaddingLeft(2)

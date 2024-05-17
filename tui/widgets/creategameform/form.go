@@ -10,9 +10,9 @@ import (
 )
 
 const (
-	ROUNDS_KEY    = "rounds"
-	ROUND_DUR_KEY = "roundDuration"
-	CONFIRM_KEY   = "done"
+	ROUNDS_KEY     = "rounds"
+	ROUND_MINS_KEY = "roundMinutes"
+	CONFIRM_KEY    = "done"
 )
 
 func isInputEmpty(s string) bool {
@@ -76,7 +76,7 @@ func newForm() *huh.Form {
 				Validate(validateNumericInput).
 				CharLimit(2),
 			huh.NewInput().
-				Key(ROUND_DUR_KEY).
+				Key(ROUND_MINS_KEY).
 				Title("Round duration (minutes)").
 				Placeholder("Enter a number").
 				Validate(validateNumericInput).
@@ -98,4 +98,16 @@ func newForm() *huh.Form {
 	form.WithTheme(getFormTheme())
 
 	return form
+}
+
+func getRounds(form *huh.Form) string {
+	return form.GetString(ROUNDS_KEY)
+}
+
+func getRoundMinutes(form *huh.Form) string {
+	return form.GetString(ROUND_MINS_KEY)
+}
+
+func wantsToCreateGame(form *huh.Form) bool {
+	return form.GetBool(CONFIRM_KEY)
 }
