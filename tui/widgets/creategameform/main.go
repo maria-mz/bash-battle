@@ -51,11 +51,11 @@ func (m *Model) Init() tea.Cmd {
 }
 
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	var cmds []tea.Cmd
-
 	switch msg := msg.(type) {
+
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
+		return m, nil
 
 	case tea.KeyMsg:
 		switch {
@@ -64,6 +64,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case key.Matches(msg, m.keys.Help):
 			m.help.ShowAll = !m.help.ShowAll
+			return m, nil
 
 		case key.Matches(msg, m.keys.Menu):
 			m.clearForm()
@@ -73,11 +74,13 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case spinner.TickMsg:
-		var cmd tea.Cmd
-		m.spinner, cmd = m.spinner.Update(msg)
+		s, cmd := m.spinner.Update(msg)
+		m.spinner = s
 		return m, cmd
 	}
 
+	// Not any of those types, should be a message handled by the form
+	var cmds []tea.Cmd
 	m.updateForm(msg, &cmds)
 
 	if !m.done && m.form.State == huh.StateCompleted {
@@ -93,15 +96,20 @@ func (m *Model) View() string {
 		return ""
 	}
 
+	var view string
+
 	switch m.form.State {
 	case huh.StateCompleted:
 		if wantsToCreateGame(m.form) {
-			return m.getLoadingView()
+			view = m.getLoadingView()
+		} else {
+			view = ""
 		}
-		return ""
 	default:
-		return m.getFormView()
+		view = m.getFormView()
 	}
+
+	return view
 }
 
 func (m *Model) updateForm(msg tea.Msg, cmds *[]tea.Cmd) {
@@ -118,13 +126,12 @@ func (m *Model) handleFormDone(cmds *[]tea.Cmd) {
 		m.doneCallback(getRounds(m.form), getRoundMinutes(m.form))
 		m.done = true
 		*cmds = append(*cmds, m.spinner.Tick)
-		return
+	} else {
+		m.clearForm()
+		m.menuCallback()
+		m.done = false // reset
+		*cmds = append(*cmds, m.form.Init())
 	}
-
-	m.clearForm()
-	m.menuCallback()
-	m.done = false // reset
-	*cmds = append(*cmds, m.form.Init())
 }
 
 func (m *Model) clearForm() {
