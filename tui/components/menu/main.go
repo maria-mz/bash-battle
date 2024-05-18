@@ -11,11 +11,9 @@ import (
 	"github.com/maria-mz/bash-battle/tui/constants"
 )
 
-type Choice int
-
 const (
-	CreateGameChoice Choice = 0
-	JoinGameChoice   Choice = 1
+	CreateGameChoice string = "Create Game"
+	JoinGameChoice   string = "Join Game"
 )
 
 var (
@@ -27,16 +25,24 @@ type Model struct {
 	// elements
 	title   string
 	choices []string
-	Choice  Choice
+	cursor  int
 	keys    keyMap
 	help    help.Model
+
+	// callbacks
+	callbacks *MenuChoiceCallbacks
 
 	// sizing
 	width  int
 	height int
 }
 
-func NewModel() Model {
+type MenuChoiceCallbacks struct {
+	CreateGameChoice func()
+	JoinGameChoice   func()
+}
+
+func NewModel(callbacks *MenuChoiceCallbacks) Model {
 	title := `
 
     Y88b         888                        888           888               888    888    888          
@@ -51,22 +57,23 @@ func NewModel() Model {
 	`
 
 	return Model{
-		title:   title,
-		choices: []string{"Create Game", "Join Game"},
-		help:    help.New(),
-		keys:    keys,
+		title:     title,
+		choices:   []string{CreateGameChoice, JoinGameChoice},
+		help:      help.New(),
+		keys:      keys,
+		callbacks: callbacks,
 	}
 }
 
 func (m *Model) moveCursorUp() {
-	if m.Choice > 0 {
-		m.Choice--
+	if m.cursor > 0 {
+		m.cursor--
 	}
 }
 
 func (m *Model) moveCursorDown() {
-	if int(m.Choice) < len(m.choices)-1 {
-		m.Choice++
+	if m.cursor < len(m.choices)-1 {
+		m.cursor++
 	}
 }
 
@@ -75,6 +82,8 @@ func (m Model) Init() tea.Cmd {
 }
 
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
+	currentOption := m.choices[m.cursor]
+
 	switch msg := msg.(type) {
 
 	case tea.WindowSizeMsg:
@@ -92,14 +101,17 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 
 		case key.Matches(msg, m.keys.Down):
 			m.moveCursorDown()
+
+		case key.Matches(msg, m.keys.Enter):
+			if currentOption == CreateGameChoice {
+				m.callbacks.CreateGameChoice()
+			} else if currentOption == JoinGameChoice {
+				m.callbacks.JoinGameChoice()
+			}
 		}
 	}
 
 	return m, nil
-}
-
-func (m Model) GetActiveChoice() Choice {
-	return m.Choice
 }
 
 func formatActiveChoice(choice string) string {
@@ -124,7 +136,7 @@ func (m Model) View() string {
 	s.WriteString("echo \"Welcome to Bash Battle!\"\n\n")
 
 	for i, choice := range m.choices {
-		if i == int(m.Choice) {
+		if i == m.cursor {
 			s.WriteString(formatActiveChoice(choice))
 		} else {
 			s.WriteString(formatInactiveChoice(choice))

@@ -7,17 +7,16 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/huh"
 	"github.com/charmbracelet/lipgloss"
-	be "github.com/maria-mz/bash-battle/backend"
-	"github.com/maria-mz/bash-battle/tui/commands"
+	"github.com/maria-mz/bash-battle/commands"
 	"github.com/maria-mz/bash-battle/utils"
 )
 
 type State int
 
 const (
-	ShowingForm State = iota
-	PendingRequest
-	ShowingCode
+	onForm State = iota
+	awaitingMsg
+	onResults
 )
 
 type Model struct {
@@ -29,8 +28,11 @@ type Model struct {
 	// state
 	State State
 
-	// server-side
-	backend *be.Backend
+	// service command builder
+	cmdBuilder *commands.CmdBuilder
+
+	// callbacks
+	done func()
 
 	// sizing
 	width  int
@@ -44,12 +46,13 @@ func newSpinner() spinner.Model {
 	return spin
 }
 
-func NewModel(backend *be.Backend) Model {
+func NewModel(cmdBuilder *commands.CmdBuilder, done func()) Model {
 	return Model{
-		title:   "▒▒▒▒ Create Game",
-		form:    newForm(),
-		spinner: newSpinner(),
-		backend: backend,
+		title:      "▒▒▒▒ Create Game",
+		form:       newForm(),
+		spinner:    newSpinner(),
+		cmdBuilder: cmdBuilder,
+		done:       done,
 	}
 }
 
@@ -67,22 +70,39 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		m.width = msg.Width
 		m.height = msg.Height
 
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "esc":
+			m, cmd = m.reset()
+			m.done()
+			return m, cmd
+		}
+
 	case spinner.TickMsg:
-		m.spinner, cmd = m.spinner.Update(msg)
-		cmds = append(cmds, cmd)
+		if m.State == awaitingMsg {
+			m.spinner, cmd = m.spinner.Update(msg)
+			cmds = append(cmds, cmd)
+		}
 
 	case commands.CreateGameMsg:
+		m.State = onResults
+		// todo: show results
 	}
 
-	if m.State == ShowingForm {
+	if m.State == onForm {
 		m, cmd = m.updateForm(msg)
 		cmds = append(cmds, cmd)
 	}
 
-	if m.shouldCreateGame() {
-		m.State = PendingRequest
-		m.form = newForm()
-		cmds = append(cmds, m.spinner.Tick, m.form.Init(), m.getRequestCmd())
+	if m.State == onForm && m.form.State == huh.StateCompleted {
+		if wantsToCreateGame(m.form) {
+			m.State = awaitingMsg
+			cmds = append(cmds, m.spinner.Tick, m.getRequestCmd())
+		} else {
+			m, cmd = m.reset()
+			cmds = append(cmds, cmd)
+			m.done()
+		}
 	}
 
 	return m, tea.Batch(cmds...)
@@ -102,23 +122,17 @@ func (m Model) updateForm(msg tea.Msg) (Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func (m Model) Reset() (Model, tea.Cmd) {
-	m.form = newForm()
-	m.State = ShowingForm
-	return m, m.form.Init()
-}
-
 func (m Model) getRequestCmd() func() tea.Msg {
 	rounds, _ := utils.StringToInt32(getRounds(m.form))
 	minutes, _ := utils.StringToInt32(getRoundMinutes(m.form))
 
-	return commands.CreateGameCmd(m.backend, rounds, minutes*60)
+	return m.cmdBuilder.NewCreateGameCmd(rounds, minutes*60)
 }
 
-func (m Model) shouldCreateGame() bool {
-	return m.State == ShowingForm &&
-		m.form.State == huh.StateCompleted &&
-		wantsToCreateGame(m.form)
+func (m Model) reset() (Model, tea.Cmd) {
+	m.form = newForm()
+	m.State = onForm
+	return m, m.form.Init()
 }
 
 func (m Model) View() string {
@@ -127,9 +141,9 @@ func (m Model) View() string {
 	}
 
 	switch m.State {
-	case ShowingForm:
+	case onForm:
 		return m.getFormView()
-	case PendingRequest:
+	case awaitingMsg:
 		return m.getLoadingView()
 	}
 

@@ -3,8 +3,7 @@ package commands
 type ErrorCode int
 
 const (
-	NoError ErrorCode = iota
-	NameTaken
+	NameTaken ErrorCode = iota
 	GameNotFound
 	InvalidCode
 	GameLobbyClosed

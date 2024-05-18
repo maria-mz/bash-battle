@@ -4,7 +4,7 @@ import (
 	"log"
 
 	tea "github.com/charmbracelet/bubbletea"
-	be "github.com/maria-mz/bash-battle/backend"
+	"github.com/maria-mz/bash-battle/commands"
 	"github.com/maria-mz/bash-battle/tui/components/creategame"
 	"github.com/maria-mz/bash-battle/tui/components/menu"
 )
@@ -17,118 +17,95 @@ const (
 )
 
 type Tui struct {
-	activeView     StateView
-	skipViewUpdate bool
+	activeView StateView
 
 	menuModel       menu.Model
 	createGameModel creategame.Model
 
-	backend *be.Backend
+	cmdBuilder *commands.CmdBuilder
 }
 
-func NewTui(backend *be.Backend) *Tui {
-	return &Tui{
-		activeView:      MenuView,
-		menuModel:       menu.NewModel(),
-		createGameModel: creategame.NewModel(backend),
-		backend:         backend,
+func NewTui(cmdBuilder *commands.CmdBuilder) *Tui {
+	tui := &Tui{}
+
+	tui.activeView = MenuView
+
+	menuCallbacks := &menu.MenuChoiceCallbacks{
+		CreateGameChoice: tui.onChoosesCreateGame,
+		JoinGameChoice:   tui.onChoosesJoinGame,
 	}
+
+	tui.menuModel = menu.NewModel(menuCallbacks)
+	tui.createGameModel = creategame.NewModel(cmdBuilder, tui.onCreateGameViewDone)
+	tui.cmdBuilder = cmdBuilder
+
+	return tui
 }
 
-func (m Tui) Init() tea.Cmd {
+func (tui *Tui) Init() tea.Cmd {
 	return tea.Batch(
 		tea.SetWindowTitle("Bash Battle"),
-		m.menuModel.Init(),
-		m.createGameModel.Init(),
+		tui.menuModel.Init(),
+		tui.createGameModel.Init(),
 	)
 }
 
-func (m Tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (tui *Tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	log.Printf("handling new message %+v", msg)
-	var cmd tea.Cmd
-	var cmds []tea.Cmd
 
-	m.skipViewUpdate = false
+	var cmd tea.Cmd
 
 	switch msg := msg.(type) {
-
 	case tea.WindowSizeMsg:
-		m, cmd = m.handleWindowSizeMsg(msg)
-		return m, cmd
-
-	case tea.KeyMsg:
-		m, cmd = m.handleKeyMsg(msg)
-		if cmd != nil {
-			cmds = append(cmds, cmd)
-		}
+		cmd = tui.updateAllViews(msg)
+		return tui, cmd
 	}
 
-	if !m.skipViewUpdate {
-		m, cmd = m.updateActiveView(msg)
-		cmds = append(cmds, cmd)
-	}
+	cmd = tui.updateActiveView(msg)
 
-	return m, tea.Batch(cmds...)
+	return tui, cmd
 }
 
-func (m Tui) handleWindowSizeMsg(msg tea.WindowSizeMsg) (Tui, tea.Cmd) {
+func (tui *Tui) updateAllViews(msg tea.Msg) tea.Cmd {
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
 
-	m.menuModel, cmd = m.menuModel.Update(msg)
+	tui.menuModel, cmd = tui.menuModel.Update(msg)
 	cmds = append(cmds, cmd)
 
-	m.createGameModel, cmd = m.createGameModel.Update(msg)
+	tui.createGameModel, cmd = tui.createGameModel.Update(msg)
 	cmds = append(cmds, cmd)
 
-	return m, tea.Batch(cmds...)
+	return tea.Batch(cmds...)
 }
 
-func (m Tui) handleKeyMsg(msg tea.KeyMsg) (Tui, tea.Cmd) {
+func (tui *Tui) updateActiveView(msg tea.Msg) tea.Cmd {
 	var cmd tea.Cmd
 
-	switch msg.String() {
-
-	case "ctrl+c", "q":
-		return m, tea.Quit
-
-	case "enter":
-		switch m.activeView {
-		case MenuView:
-			switch m.menuModel.Choice {
-			case menu.CreateGameChoice:
-				m.activeView = CreateGameView
-				m.skipViewUpdate = true
-			}
-		}
-
-	case "esc":
-		switch m.activeView {
-		case CreateGameView:
-			m.activeView = MenuView
-			m.createGameModel, cmd = m.createGameModel.Reset()
-			return m, cmd
-		}
-	}
-
-	return m, nil
-}
-
-func (m Tui) updateActiveView(msg tea.Msg) (Tui, tea.Cmd) {
-	var cmd tea.Cmd
-
-	switch m.activeView {
+	switch tui.activeView {
 	case MenuView:
-		m.menuModel, cmd = m.menuModel.Update(msg)
+		tui.menuModel, cmd = tui.menuModel.Update(msg)
 
 	case CreateGameView:
-		m.createGameModel, cmd = m.createGameModel.Update(msg)
+		tui.createGameModel, cmd = tui.createGameModel.Update(msg)
 	}
 
-	return m, cmd
+	return cmd
 }
 
-func (m Tui) View() string {
+func (tui *Tui) onChoosesCreateGame() {
+	tui.activeView = CreateGameView
+}
+
+func (tui *Tui) onChoosesJoinGame() {
+	// todo
+}
+
+func (tui *Tui) onCreateGameViewDone() {
+	tui.activeView = MenuView
+}
+
+func (m *Tui) View() string {
 	switch m.activeView {
 	case MenuView:
 		return m.menuModel.View()
