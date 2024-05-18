@@ -1,18 +1,18 @@
-package creategameform
+package creategame
 
 import (
 	"errors"
-	"strconv"
 	"unicode"
 
 	"github.com/charmbracelet/huh"
 	"github.com/maria-mz/bash-battle/tui/constants"
+	"github.com/maria-mz/bash-battle/utils"
 )
 
 const (
-	ROUNDS_KEY     = "rounds"
-	ROUND_MINS_KEY = "roundMinutes"
-	CONFIRM_KEY    = "done"
+	roundsKey    = "rounds"
+	roundMinsKey = "roundMinutes"
+	confirmKey   = "done"
 )
 
 func isInputEmpty(s string) bool {
@@ -29,11 +29,11 @@ func isInputNumeric(s string) bool {
 }
 
 func isGreaterThanZero(s string) (bool, error) {
-	n, err := strconv.Atoi(s)
+	v, err := utils.StringToInt(s)
 	if err != nil {
 		return false, err
 	}
-	return n > 0, nil
+	return v > 0, nil
 }
 
 func validateNumericInput(s string) error {
@@ -70,19 +70,19 @@ func newForm() *huh.Form {
 	form := huh.NewForm(
 		huh.NewGroup(
 			huh.NewInput().
-				Key(ROUNDS_KEY).
+				Key(roundsKey).
 				Title("Number of rounds").
 				Placeholder("Enter a number").
 				Validate(validateNumericInput).
 				CharLimit(2),
 			huh.NewInput().
-				Key(ROUND_MINS_KEY).
+				Key(roundMinsKey).
 				Title("Round duration (minutes)").
 				Placeholder("Enter a number").
 				Validate(validateNumericInput).
 				CharLimit(2),
 			huh.NewConfirm().
-				Key(CONFIRM_KEY).
+				Key(confirmKey).
 				Title("Create game?").
 				Description(
 					"Selecting 'Yes' should create a new game on the server. \n"+
@@ -92,7 +92,7 @@ func newForm() *huh.Form {
 				Affirmative("Yes").
 				Negative("No"),
 		).
-			WithShowHelp(false),
+			WithShowHelp(true),
 	)
 
 	form.WithTheme(getFormTheme())
@@ -101,13 +101,13 @@ func newForm() *huh.Form {
 }
 
 func getRounds(form *huh.Form) string {
-	return form.GetString(ROUNDS_KEY)
+	return form.GetString(roundsKey)
 }
 
 func getRoundMinutes(form *huh.Form) string {
-	return form.GetString(ROUND_MINS_KEY)
+	return form.GetString(roundMinsKey)
 }
 
 func wantsToCreateGame(form *huh.Form) bool {
-	return form.GetBool(CONFIRM_KEY)
+	return form.GetBool(confirmKey)
 }

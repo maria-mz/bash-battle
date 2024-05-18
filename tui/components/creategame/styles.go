@@ -1,4 +1,4 @@
-package creategameform
+package creategame
 
 import (
 	"github.com/charmbracelet/lipgloss"
@@ -13,6 +13,5 @@ var (
 			Foreground(constants.GreenColor)
 	formStyle    = lipgloss.NewStyle().PaddingLeft(2).PaddingBottom(1)
 	spinnerStyle = lipgloss.NewStyle().Foreground(constants.PurpleColor)
-	helpStyle    = lipgloss.NewStyle().PaddingLeft(2)
 	loadingStyle = lipgloss.NewStyle().PaddingLeft(2)
 )

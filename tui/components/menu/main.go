@@ -11,10 +11,11 @@ import (
 	"github.com/maria-mz/bash-battle/tui/constants"
 )
 
-// -- Menu Choices
+type Choice int
+
 const (
-	CREATE_GAME_CHOICE = "Create Game"
-	JOIN_GAME_CHOICE   = "Join Game"
+	CreateGameChoice Choice = 0
+	JoinGameChoice   Choice = 1
 )
 
 var (
@@ -23,21 +24,19 @@ var (
 )
 
 type Model struct {
+	// elements
 	title   string
 	choices []string
-	cursor  int
+	Choice  Choice
+	keys    keyMap
+	help    help.Model
 
-	keys keyMap
-	help help.Model
-
-	onCreateGameCallback func()
-	onJoinGameCallback   func()
-
+	// sizing
 	width  int
 	height int
 }
 
-func NewModel(createGameCallback func(), joinGameCallback func()) *Model {
+func NewModel() Model {
 	title := `
 
     Y88b         888                        888           888               888    888    888          
@@ -51,36 +50,31 @@ func NewModel(createGameCallback func(), joinGameCallback func()) *Model {
 
 	`
 
-	return &Model{
-		title: title,
-		choices: []string{
-			CREATE_GAME_CHOICE,
-			JOIN_GAME_CHOICE,
-		},
-		onCreateGameCallback: createGameCallback,
-		onJoinGameCallback:   joinGameCallback,
-		help:                 help.New(),
-		keys:                 keys,
+	return Model{
+		title:   title,
+		choices: []string{"Create Game", "Join Game"},
+		help:    help.New(),
+		keys:    keys,
 	}
 }
 
 func (m *Model) moveCursorUp() {
-	if m.cursor > 0 {
-		m.cursor--
+	if m.Choice > 0 {
+		m.Choice--
 	}
 }
 
 func (m *Model) moveCursorDown() {
-	if m.cursor < len(m.choices)-1 {
-		m.cursor++
+	if int(m.Choice) < len(m.choices)-1 {
+		m.Choice++
 	}
 }
 
-func (m *Model) Init() tea.Cmd {
+func (m Model) Init() tea.Cmd {
 	return nil // Don't need to do any I/O on start
 }
 
-func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	switch msg := msg.(type) {
 
 	case tea.WindowSizeMsg:
@@ -98,18 +92,14 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case key.Matches(msg, m.keys.Down):
 			m.moveCursorDown()
-
-		case key.Matches(msg, m.keys.Enter):
-			// TODO: better way to do this?
-			if m.choices[m.cursor] == CREATE_GAME_CHOICE {
-				m.onCreateGameCallback()
-			} else if m.choices[m.cursor] == JOIN_GAME_CHOICE {
-				m.onJoinGameCallback()
-			}
 		}
 	}
 
 	return m, nil
+}
+
+func (m Model) GetActiveChoice() Choice {
+	return m.Choice
 }
 
 func formatActiveChoice(choice string) string {
@@ -121,7 +111,7 @@ func formatInactiveChoice(choice string) string {
 	return fmt.Sprintf("%s\n", choice)
 }
 
-func (m *Model) View() string {
+func (m Model) View() string {
 	if m.width == 0 {
 		// Dimensions haven't been set yet, no view -> empty string
 		return ""
@@ -134,7 +124,7 @@ func (m *Model) View() string {
 	s.WriteString("echo \"Welcome to Bash Battle!\"\n\n")
 
 	for i, choice := range m.choices {
-		if i == m.cursor {
+		if i == int(m.Choice) {
 			s.WriteString(formatActiveChoice(choice))
 		} else {
 			s.WriteString(formatInactiveChoice(choice))
