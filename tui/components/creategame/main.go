@@ -16,7 +16,7 @@ type State int
 
 const (
 	onForm State = iota
-	awaitingMsg
+	awaitingResp
 	onResults
 )
 
@@ -74,13 +74,14 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "esc":
-			m, cmd = m.reset()
+			m.form = newForm()
+			m.State = onForm
 			m.done()
-			return m, cmd
+			return m, m.form.Init()
 		}
 
 	case spinner.TickMsg:
-		if m.State == awaitingMsg {
+		if m.State == awaitingResp {
 			m.spinner, cmd = m.spinner.Update(msg)
 			cmds = append(cmds, cmd)
 		}
@@ -97,11 +98,12 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 
 	if m.State == onForm && m.form.State == huh.StateCompleted {
 		if wantsToCreateGame(m.form) {
-			m.State = awaitingMsg
-			cmds = append(cmds, m.spinner.Tick, m.getRequestCmd())
+			m.State = awaitingResp
+			cmds = append(cmds, m.spinner.Tick, m.getCreateGameCmd())
 		} else {
-			m, cmd = m.reset()
-			cmds = append(cmds, cmd)
+			m.form = newForm()
+			m.State = onForm
+			cmds = append(cmds, m.form.Init())
 			m.done()
 		}
 	}
@@ -123,17 +125,18 @@ func (m Model) updateForm(msg tea.Msg) (Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func (m Model) getRequestCmd() func() tea.Msg {
+func (m Model) getCreateGameCmd() func() tea.Msg {
 	rounds, _ := utils.StringToInt32(getRounds(m.form))
 	minutes, _ := utils.StringToInt32(getRoundMinutes(m.form))
 
-	return m.cmdBuilder.NewCreateGameCmd(rounds, minutes*60)
-}
+	request := &pb.CreateGameRequest{
+		GameConfig: &pb.GameConfig{
+			Rounds:       rounds,
+			RoundSeconds: minutes * 60,
+		},
+	}
 
-func (m Model) reset() (Model, tea.Cmd) {
-	m.form = newForm()
-	m.State = onForm
-	return m, m.form.Init()
+	return m.cmdBuilder.NewCreateGameCmd(request)
 }
 
 func (m Model) View() string {
@@ -144,7 +147,7 @@ func (m Model) View() string {
 	switch m.State {
 	case onForm:
 		return m.getFormView()
-	case awaitingMsg:
+	case awaitingResp:
 		return m.getLoadingView()
 	}
 

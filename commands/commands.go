@@ -6,25 +6,27 @@ import (
 	be "github.com/maria-mz/bash-battle/backend"
 )
 
+// CriticalErrMsg represents a critical error message. If we receive this
+// should probably shut down the program
 type CriticalErrMsg struct {
 	Error error
 }
 
+// CmdBuilder wraps the backend to prepare commands that integrate well with
+// Bubble Tea framework
 type CmdBuilder struct {
 	backend *be.Backend
 }
 
+// NewCmdBuilder creates a new CmdBuilder
 func NewCmdBuilder(backend *be.Backend) *CmdBuilder {
 	return &CmdBuilder{backend: backend}
 }
 
-func (b *CmdBuilder) NewLoginCmd(name string) func() tea.Msg {
+// NewLoginCmd returns a command that handles a login request
+func (b *CmdBuilder) NewLoginCmd(req *pb.LoginRequest) func() tea.Msg {
 	return func() tea.Msg {
-		request := &pb.LoginRequest{
-			PlayerName: name,
-		}
-
-		resp, err := b.backend.Login(request)
+		resp, err := b.backend.Login(req)
 
 		if err != nil {
 			return CriticalErrMsg{Error: err}
@@ -34,16 +36,10 @@ func (b *CmdBuilder) NewLoginCmd(name string) func() tea.Msg {
 	}
 }
 
-func (b *CmdBuilder) NewCreateGameCmd(rounds int32, seconds int32) func() tea.Msg {
+// NewCreateGameCmd returns a command that handles a game creation request
+func (b *CmdBuilder) NewCreateGameCmd(req *pb.CreateGameRequest) func() tea.Msg {
 	return func() tea.Msg {
-		request := &pb.CreateGameRequest{
-			GameConfig: &pb.GameConfig{
-				Rounds:       rounds,
-				RoundSeconds: seconds,
-			},
-		}
-
-		resp, err := b.backend.CreateGame(request)
+		resp, err := b.backend.CreateGame(req)
 
 		if err != nil {
 			return CriticalErrMsg{Error: err}
@@ -53,14 +49,10 @@ func (b *CmdBuilder) NewCreateGameCmd(rounds int32, seconds int32) func() tea.Ms
 	}
 }
 
-func (b *CmdBuilder) NewJoinGameCmd(id string, code string) func() tea.Msg {
+// NewJoinGameCmd returns a command that handles a game join request
+func (b *CmdBuilder) NewJoinGameCmd(req *pb.JoinGameRequest) func() tea.Msg {
 	return func() tea.Msg {
-		request := &pb.JoinGameRequest{
-			GameID:   id,
-			GameCode: code,
-		}
-
-		resp, err := b.backend.JoinGame(request)
+		resp, err := b.backend.JoinGame(req)
 
 		if err != nil {
 			return CriticalErrMsg{Error: err}
