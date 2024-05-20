@@ -37,7 +37,7 @@ func (be *Backend) getAuthContext() context.Context {
 func (be *Backend) Login(in *pb.LoginRequest) (*pb.LoginResponse, error) {
 	resp, err := be.grpcClient.Login(context.Background(), in)
 
-	if resp.ErrorCode == nil {
+	if err == nil && resp.ErrorCode == nil {
 		be.token = resp.Token
 	}
 
