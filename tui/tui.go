@@ -1,8 +1,6 @@
 package tui
 
 import (
-	"log"
-
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/maria-mz/bash-battle/commands"
 	"github.com/maria-mz/bash-battle/tui/components/creategame"
@@ -51,7 +49,7 @@ func (tui *Tui) Init() tea.Cmd {
 }
 
 func (tui *Tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	log.Printf("handling new message %+v", msg)
+	// log.Printf("handling new message %+v", msg)
 
 	var cmd tea.Cmd
 

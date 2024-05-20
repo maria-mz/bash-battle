@@ -84,10 +84,7 @@ func newForm() *huh.Form {
 			huh.NewConfirm().
 				Key(confirmKey).
 				Title("Create game?").
-				Description(
-					"Selecting 'Yes' should create a new game on the server with a \n"+
-						"unique ID you can use to join the game.",
-				).
+				Description("Choosing 'Yes' should create a new game on the server.").
 				Affirmative("Yes").
 				Negative("No"),
 		).

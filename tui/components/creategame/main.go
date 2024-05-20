@@ -3,6 +3,7 @@ package creategame
 import (
 	"fmt"
 
+	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/huh"
@@ -15,45 +16,54 @@ import (
 type State int
 
 const (
-	onForm State = iota
-	awaitingResp
-	onResults
+	OnForm State = iota
+	OnLoading
+	OnResults
 )
 
 type Model struct {
 	// elements
 	title   string
-	form    *huh.Form
+	form    *huh.Form // form has its own keys & help
 	spinner spinner.Model
+	keys    keyMap     // keys for loading & results view
+	help    help.Model // help for loading & results view
+
+	// styles
+	styles styles
 
 	// state
-	State State
+	State  State
+	gameID string
 
-	// service command builder
 	cmdBuilder *commands.CmdBuilder
 
 	// callbacks
-	done func()
+	doneCallback func()
 
-	// sizing
 	width  int
 	height int
 }
 
-func newSpinner() spinner.Model {
+func newSpinner(style lipgloss.Style) spinner.Model {
 	spin := spinner.New()
 	spin.Spinner = spinner.Line
-	spin.Style = spinnerStyle
+	spin.Style = style
 	return spin
 }
 
 func NewModel(cmdBuilder *commands.CmdBuilder, done func()) Model {
+	styles := newStyles()
+
 	return Model{
-		title:      "▒▒▒▒ Create Game",
-		form:       newForm(),
-		spinner:    newSpinner(),
-		cmdBuilder: cmdBuilder,
-		done:       done,
+		title:        "▒▒▒▒ Create Game",
+		form:         newForm(),
+		spinner:      newSpinner(styles.loadingStyles.spinner),
+		keys:         keys,
+		help:         help.New(),
+		styles:       styles,
+		cmdBuilder:   cmdBuilder,
+		doneCallback: done,
 	}
 }
 
@@ -74,37 +84,39 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "esc":
-			m.form = newForm()
-			m.State = onForm
 			m.done()
 			return m, m.form.Init()
+		case "enter":
+			if m.State == OnResults {
+				m.done()
+				return m, m.form.Init()
+			}
+			// if OnForm, form will handle enter event (e.g. move to next field)
 		}
 
 	case spinner.TickMsg:
-		if m.State == awaitingResp {
+		if m.State == OnLoading {
 			m.spinner, cmd = m.spinner.Update(msg)
 			cmds = append(cmds, cmd)
 		}
 
-	case pb.CreateGameResponse:
-		m.State = onResults
-		// todo: show results
+	case *pb.CreateGameResponse:
+		m.State = OnResults
+		m.gameID = msg.GameID
 	}
 
-	if m.State == onForm {
+	if m.State == OnForm {
 		m, cmd = m.updateForm(msg)
 		cmds = append(cmds, cmd)
 	}
 
-	if m.State == onForm && m.form.State == huh.StateCompleted {
+	if m.State == OnForm && m.form.State == huh.StateCompleted {
 		if wantsToCreateGame(m.form) {
-			m.State = awaitingResp
+			m.State = OnLoading
 			cmds = append(cmds, m.spinner.Tick, m.getCreateGameCmd())
 		} else {
-			m.form = newForm()
-			m.State = onForm
-			cmds = append(cmds, m.form.Init())
 			m.done()
+			cmds = append(cmds, m.form.Init())
 		}
 	}
 
@@ -139,33 +151,56 @@ func (m Model) getCreateGameCmd() func() tea.Msg {
 	return m.cmdBuilder.NewCreateGameCmd(request)
 }
 
+func (m *Model) done() {
+	m.form = newForm()
+	m.State = OnForm
+	m.doneCallback()
+}
+
 func (m Model) View() string {
 	if m.width == 0 {
 		return ""
 	}
 
 	switch m.State {
-	case onForm:
-		return m.getFormView()
-	case awaitingResp:
-		return m.getLoadingView()
+	case OnForm:
+		return m.formView()
+	case OnLoading:
+		return m.loadingView()
+	case OnResults:
+		return m.resultsView()
 	}
 
 	return "nothing to show..."
 }
 
-func (m Model) getFormView() string {
+func (m Model) formView() string {
 	return lipgloss.JoinVertical(
 		lipgloss.Left,
-		titleStyle.Render(m.title),
-		formStyle.Render(m.form.View()),
+		m.styles.title.Render(m.title),
+		m.styles.formStyles.form.Render(m.form.View()),
 	)
 }
 
-func (m Model) getLoadingView() string {
+func (m Model) loadingView() string {
 	return lipgloss.JoinVertical(
 		lipgloss.Left,
-		titleStyle.Render(m.title),
-		fmt.Sprint(m.spinner.View(), loadingTextStyle.Render("Creating game, please wait...")),
+		m.styles.title.Render(m.title),
+		fmt.Sprint(
+			m.spinner.View(),
+			m.styles.loadingStyles.text.Render(" Creating game, please hold...")),
+	)
+}
+
+func (m Model) resultsView() string {
+	return lipgloss.JoinVertical(
+		lipgloss.Left,
+		m.styles.title.Render(m.title),
+		fmt.Sprintf(
+			"%s Use the following ID to join the game: %s.",
+			m.styles.resultsStyles.successMsg.Render("✓ Game Created!"),
+			m.styles.resultsStyles.id.Render(m.gameID),
+		),
+		m.styles.resultsStyles.help.Render(m.help.View(m.keys)),
 	)
 }
