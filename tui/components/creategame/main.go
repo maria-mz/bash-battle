@@ -7,6 +7,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/huh"
 	"github.com/charmbracelet/lipgloss"
+	pb "github.com/maria-mz/bash-battle-proto/proto"
 	"github.com/maria-mz/bash-battle/commands"
 	"github.com/maria-mz/bash-battle/utils"
 )
@@ -84,7 +85,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			cmds = append(cmds, cmd)
 		}
 
-	case commands.CreateGameMsg:
+	case pb.CreateGameResponse:
 		m.State = onResults
 		// todo: show results
 	}

@@ -30,14 +30,14 @@ func (be *Backend) getAuthContext() context.Context {
 	header := metadata.New(
 		map[string]string{"authorization": be.token},
 	)
-	ctx := metadata.NewIncomingContext(context.Background(), header)
+	ctx := metadata.NewOutgoingContext(context.Background(), header)
 	return ctx
 }
 
 func (be *Backend) Login(in *pb.LoginRequest) (*pb.LoginResponse, error) {
 	resp, err := be.grpcClient.Login(context.Background(), in)
 
-	if resp.ErrorCode == pb.LoginResponse_UNSPECIFIED_ERR {
+	if resp.ErrorCode == nil {
 		be.token = resp.Token
 	}
 
@@ -97,7 +97,7 @@ func (be *Backend) recvStream() {
 		event, err := be.stream.Recv()
 
 		if err != nil {
-			slog.Error("failed to receive in game stream")
+			slog.Error("failed to receive from game stream")
 			be.StreamEnded <- true
 			return
 		}
