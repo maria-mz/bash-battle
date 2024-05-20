@@ -10,8 +10,8 @@ var (
 			PaddingLeft(2).
 			PaddingBottom(1).
 			PaddingTop(1).
-			Foreground(constants.GreenColor)
-	formStyle    = lipgloss.NewStyle().PaddingLeft(2).PaddingBottom(1)
-	spinnerStyle = lipgloss.NewStyle().Foreground(constants.PurpleColor)
-	loadingStyle = lipgloss.NewStyle().PaddingLeft(2)
+			Foreground(constants.GoldColor)
+	formStyle        = lipgloss.NewStyle().PaddingLeft(2).PaddingBottom(1)
+	spinnerStyle     = lipgloss.NewStyle().PaddingLeft(2).Foreground(constants.TextColor)
+	loadingTextStyle = spinnerStyle.Italic(true)
 )

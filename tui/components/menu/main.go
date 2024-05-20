@@ -17,8 +17,8 @@ const (
 )
 
 var (
-	activeStyle = lipgloss.NewStyle().Foreground(constants.GreenColor)
 	titleStyle  = lipgloss.NewStyle().Foreground(constants.BlueColor)
+	activeStyle = lipgloss.NewStyle().Foreground(constants.GoldColor)
 )
 
 type Model struct {
@@ -44,17 +44,13 @@ type MenuChoiceCallbacks struct {
 
 func NewModel(callbacks *MenuChoiceCallbacks) Model {
 	title := `
-
-    Y88b         888                        888           888               888    888    888          
-	 Y88b        888                        888           888               888    888    888          
-	  Y88b       888                        888           888               888    888    888          
-	   Y88b      88888b.   8888b.  .d8888b  88888b.       88888b.   8888b.  888888 888888 888  .d88b.  
-	   d88P      888 "88b     "88b 88K      888 "88b      888 "88b     "88b 888    888    888 d8P  Y8b 
-	  d88P       888  888 .d888888 "Y8888b. 888  888      888  888 .d888888 888    888    888 88888888 
-	 d88P        888 d88P 888  888      X88 888  888      888 d88P 888  888 Y88b.  Y88b.  888 Y8b.     
-    d88P         88888P"  "Y888888  88888P' 888  888      88888P"  "Y888888  "Y888  "Y888 888  "Y8888  
-
-	`
+    __                __               __       __          __  __  __   
+    \ \              / /_  ____ ______/ /_     / /_  ____ _/ /_/ /_/ /__ 
+     \ \            / __ \/ __  / ___/ __ \   / __ \/ __  / __/ __/ / _ \
+     / /           / /_/ / /_/ (__  ) / / /  / /_/ / /_/ / /_/ /_/ /  __/
+    /_/  ______   /_.___/\__,_/____/_/ /_/  /_.___/\__,_/\__/\__/_/\___/ 
+        /_____/                                                          
+    `
 
 	return Model{
 		title:     title,

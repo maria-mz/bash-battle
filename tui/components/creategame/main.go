@@ -42,7 +42,7 @@ type Model struct {
 
 func newSpinner() spinner.Model {
 	spin := spinner.New()
-	spin.Spinner = spinner.Points
+	spin.Spinner = spinner.Line
 	spin.Style = spinnerStyle
 	return spin
 }
@@ -166,8 +166,6 @@ func (m Model) getLoadingView() string {
 	return lipgloss.JoinVertical(
 		lipgloss.Left,
 		titleStyle.Render(m.title),
-		loadingStyle.Render(
-			fmt.Sprint(m.spinner.View(), " Creating game, please wait..."),
-		),
+		fmt.Sprint(m.spinner.View(), loadingTextStyle.Render("Creating game, please wait...")),
 	)
 }

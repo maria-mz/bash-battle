@@ -3,14 +3,14 @@ package constants
 import "github.com/charmbracelet/lipgloss"
 
 /* COLORS */
-// Credit to Everforest Vim Theme for the colors! -> https://github.com/sainnhe/everforest
+// Credit to the Rose Pine Theme for the colors! -> https://rosepinetheme.com/palette/ingredients/
 var (
-	PurpleColor = lipgloss.AdaptiveColor{Light: "#DF69BA", Dark: "#D699B6"}
-	BlueColor   = lipgloss.AdaptiveColor{Light: "#3A94C5", Dark: "#7FBBB3"}
-	RedColor    = lipgloss.AdaptiveColor{Light: "#F85552", Dark: "#E67C80"}
-	OrangeColor = lipgloss.AdaptiveColor{Light: "#F57D26", Dark: "#E69875"}
-	YellowColor = lipgloss.AdaptiveColor{Light: "#DFA000", Dark: "#DBBC7F"}
-	AquaColor   = lipgloss.AdaptiveColor{Light: "#35A77C", Dark: "#83C092"}
-	GreenColor  = lipgloss.AdaptiveColor{Light: "#8DA101", Dark: "#A7C080"}
+	TextColor   = lipgloss.AdaptiveColor{Light: "#575279", Dark: "#e0def4"}
+	RedColor    = lipgloss.AdaptiveColor{Light: "#b4637a", Dark: "#eb6f92"}
+	CoralColor  = lipgloss.AdaptiveColor{Light: "#d7827e", Dark: "#ea9a97"}
+	GoldColor   = lipgloss.AdaptiveColor{Light: "#ea9d34", Dark: "#f6c177"}
+	BlueColor   = lipgloss.AdaptiveColor{Light: "#286983", Dark: "#9ccfd8"}
+	TealColor   = lipgloss.AdaptiveColor{Light: "#8DA101", Dark: "#3e8fb0"}
+	PurpleColor = lipgloss.AdaptiveColor{Light: "#907aa9", Dark: "#c4a7e7"}
 	GrayColor   = lipgloss.Color("243")
 )
