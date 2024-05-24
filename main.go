@@ -1,20 +1,21 @@
 package main
 
 import (
-	"fmt"
-	"os"
+	"log"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/maria-mz/bash-battle/tui"
+	"github.com/maria-mz/bash-battle/app"
 )
 
 func main() {
-	tea.LogToFile("debug.log", "debug")
+	app, err := app.NewApp("127.0.0.1", 5555, "maria")
 
-	p := tea.NewProgram(tui.NewTui(), tea.WithAltScreen())
+	defer app.Shutdown()
 
-	if _, err := p.Run(); err != nil {
-		fmt.Printf("Error while running program: %v", err)
-		os.Exit(1)
+	if err != nil {
+		log.Fatalf("Hmm, something went wrong: %s", err)
+	}
+
+	if err = app.RunTui(); err != nil {
+		log.Fatalf("Failed to run TUI %s", err)
 	}
 }

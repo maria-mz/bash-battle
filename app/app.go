@@ -2,7 +2,6 @@ package app
 
 import (
 	"fmt"
-	"log"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/maria-mz/bash-battle-proto/proto"
@@ -34,7 +33,7 @@ func NewApp(host string, port uint16, username string) (*App, error) {
 	return app, nil
 }
 
-func (app *App) StartTui() error {
+func (app *App) RunTui() error {
 	tea.LogToFile("debug.log", "debug")
 
 	if _, err := app.program.Run(); err != nil {
@@ -45,7 +44,6 @@ func (app *App) StartTui() error {
 }
 
 func (app *App) Shutdown() {
-	log.Print("shutting down")
 	if app.program != nil {
 		app.program.Quit()
 	}
