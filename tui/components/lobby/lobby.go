@@ -142,7 +142,7 @@ func (m LobbyModel) tablesView() string {
 			lipgloss.Height(playersTable),
 			lipgloss.Left,
 			lipgloss.Top,
-			configTable,
+			lipgloss.NewStyle().PaddingRight(1).Render(configTable),
 		),
 		lipgloss.Place(
 			lipgloss.Width(playersTable),
