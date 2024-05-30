@@ -7,6 +7,6 @@ import (
 
 var (
 	styleConfigTable = lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).Padding(1, 2)
-	styleConfigTitle = lipgloss.NewStyle().Foreground(colors.Yellow)
+	styleConfigTitle = lipgloss.NewStyle()
 	styleConfigValue = lipgloss.NewStyle().Foreground(colors.Green)
 )

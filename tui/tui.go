@@ -25,8 +25,6 @@ type Tui struct {
 
 	termWidth  int
 	termHeight int
-
-	running bool
 }
 
 func NewTui(conf config.Config) *Tui {
@@ -38,15 +36,9 @@ func NewTui(conf config.Config) *Tui {
 }
 
 func (tui *Tui) Init() tea.Cmd {
-	setRunning := func() tea.Cmd {
-		tui.running = true
-		return nil
-	}
-
 	return tea.Batch(
 		tea.SetWindowTitle(constants.WindowTitle),
 		tui.lobbyModel.Init(),
-		setRunning(),
 	)
 }
 
@@ -58,10 +50,6 @@ func (tui *Tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 
 	case tea.WindowSizeMsg:
-		// Program sends this message on start up, I think it's the only way
-		// to know when the program has started
-		log.Printf("setting is running to true")
-		tui.running = true
 		tui.termWidth = msg.Width
 		tui.termHeight = msg.Height
 
@@ -114,9 +102,4 @@ func (m *Tui) View() string {
 		mainView,
 		m.footerModel.View(m.termWidth),
 	)
-}
-
-func (m *Tui) IsRunning() bool {
-	log.Printf("running = %v", m.running)
-	return m.running
 }
