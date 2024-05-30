@@ -1,11 +1,14 @@
 package tui
 
 import (
+	"log"
+
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/maria-mz/bash-battle/context"
-	"github.com/maria-mz/bash-battle/tui/components/footer"
-	"github.com/maria-mz/bash-battle/tui/components/lobby"
+	"github.com/maria-mz/bash-battle/config"
+	"github.com/maria-mz/bash-battle/tui/constants"
+	"github.com/maria-mz/bash-battle/tui/footer"
+	"github.com/maria-mz/bash-battle/tui/lobby"
 )
 
 type StateView int
@@ -17,46 +20,54 @@ const (
 type Tui struct {
 	activeView StateView
 
-	lobbyModel  lobby.LobbyModel
-	footerModel footer.FooterModel
+	lobbyModel  lobby.Lobby
+	footerModel footer.Footer
 
 	termWidth  int
 	termHeight int
+
+	running bool
 }
 
-func NewTui(ctx context.AppContext) *Tui {
-	tui := &Tui{
-		activeView: LobbyView,
-		lobbyModel: lobby.New(ctx),
-		footerModel: footer.FooterModel{
-			Username:         ctx.Username,
-			ConnectionStatus: ctx.ConnectionStatus,
-			GameStatus:       ctx.GameStatus,
-		},
+func NewTui(conf config.Config) *Tui {
+	return &Tui{
+		activeView:  LobbyView,
+		lobbyModel:  lobby.New(conf),
+		footerModel: footer.New(conf),
 	}
-
-	return tui
 }
 
 func (tui *Tui) Init() tea.Cmd {
+	setRunning := func() tea.Cmd {
+		tui.running = true
+		return nil
+	}
+
 	return tea.Batch(
-		tea.SetWindowTitle("Bash Battle"),
+		tea.SetWindowTitle(constants.WindowTitle),
 		tui.lobbyModel.Init(),
+		setRunning(),
 	)
 }
 
 func (tui *Tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	// log.Printf("handling new message %+v", msg)
+	log.Printf("handling new message %#v", msg)
 
 	var cmd tea.Cmd
 
 	switch msg := msg.(type) {
+
 	case tea.WindowSizeMsg:
+		// Program sends this message on start up, I think it's the only way
+		// to know when the program has started
+		log.Printf("setting is running to true")
+		tui.running = true
 		tui.termWidth = msg.Width
 		tui.termHeight = msg.Height
 
 		cmd = tui.updateAllViews(msg)
 		return tui, cmd
+
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "q", "ctrl+c":
@@ -65,6 +76,7 @@ func (tui *Tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	cmd = tui.updateActiveView(msg)
+	tui.footerModel.Update(msg)
 
 	return tui, cmd
 }
@@ -90,16 +102,21 @@ func (tui *Tui) updateActiveView(msg tea.Msg) tea.Cmd {
 }
 
 func (m *Tui) View() string {
-	activeView := "nothing to show..."
+	mainView := "nothing to show..."
 
 	switch m.activeView {
 	case LobbyView:
-		activeView = m.lobbyModel.View()
+		mainView = m.lobbyModel.View()
 	}
 
 	return lipgloss.JoinVertical(
 		lipgloss.Center,
-		activeView,
+		mainView,
 		m.footerModel.View(m.termWidth),
 	)
+}
+
+func (m *Tui) IsRunning() bool {
+	log.Printf("running = %v", m.running)
+	return m.running
 }

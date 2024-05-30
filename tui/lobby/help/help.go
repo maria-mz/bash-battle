@@ -1,5 +1,4 @@
-// Help Model component
-package lobby
+package help
 
 import (
 	"github.com/charmbracelet/bubbles/help"
@@ -43,15 +42,15 @@ func (k keyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{{k.Quit, k.browse}}
 }
 
-type helpModel struct {
+type Help struct {
 	Keys keyMap
 	help help.Model
 }
 
-func newHelpModel() helpModel {
-	return helpModel{Keys: keys, help: help.New()}
+func NewHelp() Help {
+	return Help{Keys: keys, help: help.New()}
 }
 
-func (m helpModel) View() string {
+func (m Help) View() string {
 	return helpStyle.Render(m.help.View(m.Keys))
 }
