@@ -1,4 +1,3 @@
-// Players Model component
 package playerlist
 
 import (
@@ -25,7 +24,7 @@ type PlayerList struct {
 	list       list.Model
 }
 
-func NewPlayerList(conf config.Config) PlayerList {
+func New(conf config.Config) PlayerList {
 	return PlayerList{
 		maxPlayers: conf.GameConfig.MaxPlayers,
 		list:       createEmptyList(),

@@ -47,7 +47,7 @@ type Help struct {
 	help help.Model
 }
 
-func NewHelp() Help {
+func New() Help {
 	return Help{Keys: keys, help: help.New()}
 }
 

@@ -24,7 +24,7 @@ type ConfigTable struct {
 	view string // cached view
 }
 
-func NewConfigTable(conf config.Config) ConfigTable {
+func New(conf config.Config) ConfigTable {
 	m := ConfigTable{
 		serverAddr: conf.ServerAddr,
 		rounds:     utils.IntToString(conf.GameConfig.Rounds),

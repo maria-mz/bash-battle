@@ -22,14 +22,20 @@ type Lobby struct {
 
 	width  int
 	height int
+
+	titleView string // cached view
 }
 
 func New(conf config.Config) Lobby {
-	return Lobby{
-		configTable: configtable.NewConfigTable(conf),
-		playerList:  playerlist.NewPlayerList(conf),
-		help:        help.NewHelp(),
+	m := Lobby{
+		configTable: configtable.New(conf),
+		playerList:  playerlist.New(conf),
+		help:        help.New(),
 	}
+
+	m.buildTitleView()
+
+	return m
 }
 
 func (m Lobby) Init() tea.Cmd {
@@ -78,15 +84,15 @@ func (m Lobby) mainView() string {
 		lipgloss.Center,
 		lipgloss.JoinVertical(
 			lipgloss.Center,
-			m.titleView(),
+			m.titleView,
 			m.tablesView(),
 			m.help.View(),
 		),
 	)
 }
 
-func (m Lobby) titleView() string {
-	return lipgloss.JoinVertical(
+func (m *Lobby) buildTitleView() {
+	m.titleView = lipgloss.JoinVertical(
 		lipgloss.Center,
 		lipgloss.JoinHorizontal(
 			lipgloss.Center,
