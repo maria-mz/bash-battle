@@ -1,4 +1,4 @@
-// These are messages sent from the app to the TUI
+// These are messages that the App (backend) sends to the TUI (frontend)
 package messages
 
 import "github.com/maria-mz/bash-battle/status"

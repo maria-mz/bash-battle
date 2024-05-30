@@ -7,9 +7,9 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/maria-mz/bash-battle/config"
+	"github.com/maria-mz/bash-battle/messages"
 	"github.com/maria-mz/bash-battle/status"
 	"github.com/maria-mz/bash-battle/tui/constants"
-	"github.com/maria-mz/bash-battle/tui/messages"
 )
 
 type Footer struct {

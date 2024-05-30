@@ -7,8 +7,8 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/maria-mz/bash-battle/config"
+	"github.com/maria-mz/bash-battle/messages"
 	"github.com/maria-mz/bash-battle/tui/constants"
-	"github.com/maria-mz/bash-battle/tui/messages"
 	"github.com/maria-mz/bash-battle/utils"
 )
 

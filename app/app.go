@@ -8,9 +8,9 @@ import (
 	"github.com/maria-mz/bash-battle-proto/proto"
 	be "github.com/maria-mz/bash-battle/backend"
 	"github.com/maria-mz/bash-battle/config"
+	"github.com/maria-mz/bash-battle/messages"
 	"github.com/maria-mz/bash-battle/status"
 	"github.com/maria-mz/bash-battle/tui"
-	"github.com/maria-mz/bash-battle/tui/messages"
 )
 
 type App struct {
