@@ -51,8 +51,8 @@ func (m Footer) View(width int) string {
 		fmt.Sprintf(
 			"%s%s %s",
 			styleUsername.Render(m.username),
-			connStyle.Render(constants.ConnectionTextMap[m.connStatus]),
-			constants.StatusTextMap[m.gameStatus],
+			connStyle.Render(constants.ConnStatusTextMap[m.connStatus]),
+			constants.GameStatusTextMap[m.gameStatus],
 		),
 	)
 

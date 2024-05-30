@@ -7,15 +7,11 @@ import (
 )
 
 func main() {
-	app, err := app.NewApp("127.0.0.1", 5555, "maria")
+	app := app.New("127.0.0.1", 5555, "maria :)")
 
 	defer app.Shutdown()
 
-	if err != nil {
-		log.Fatalf("Hmm, something went wrong: %s", err)
-	}
-
-	if err = app.RunTui(); err != nil {
-		log.Fatalf("Failed to run TUI %s", err)
+	if err := app.Run(); err != nil {
+		log.Fatalf("Failed to run run app %s", err)
 	}
 }

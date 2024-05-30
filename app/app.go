@@ -2,45 +2,53 @@ package app
 
 import (
 	"fmt"
+	"log"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/maria-mz/bash-battle-proto/proto"
 	be "github.com/maria-mz/bash-battle/backend"
-	"github.com/maria-mz/bash-battle/context"
+	"github.com/maria-mz/bash-battle/config"
+	"github.com/maria-mz/bash-battle/status"
 	"github.com/maria-mz/bash-battle/tui"
+	"github.com/maria-mz/bash-battle/tui/messages"
 )
 
 type App struct {
-	context context.AppContext
+	config *config.Config
+
+	connStatus status.ConnStatus
+	gameStatus status.GameStatus
+
 	backend *be.Backend
+	players []*proto.Player
+
 	program *tea.Program
 }
 
-func NewApp(host string, port uint16, username string) (*App, error) {
+func New(host string, port uint16, username string) *App {
 	app := &App{}
-	app.context = context.AppContext{}
-
-	if err := app.initBackend(host, port); err != nil {
-		return app, err
+	app.config = &config.Config{
+		ServerAddr: fmt.Sprintf("%s:%d", host, port),
+		Username:   username,
 	}
 
-	if err := app.loginUser(username); err != nil {
-		return app, err
-	}
-
-	app.program = tea.NewProgram(tui.NewTui(app.context), tea.WithAltScreen())
-
-	return app, nil
+	return app
 }
 
-func (app *App) RunTui() error {
-	tea.LogToFile("debug.log", "debug")
-
-	if _, err := app.program.Run(); err != nil {
+func (app *App) Run() error {
+	if err := app.initBackend(); err != nil {
 		return err
 	}
 
-	return nil
+	if err := app.loginUser(); err != nil {
+		return err
+	}
+
+	app.program = tea.NewProgram(tui.NewTui(*app.config), tea.WithAltScreen())
+
+	err := app.runTui() // blocking
+
+	return err
 }
 
 func (app *App) Shutdown() {
@@ -53,24 +61,21 @@ func (app *App) Shutdown() {
 	}
 }
 
-func (app *App) initBackend(host string, port uint16) error {
-	serverAddr := fmt.Sprintf("%s:%d", host, port)
-
-	backend, err := be.NewBackend(serverAddr)
+func (app *App) initBackend() error {
+	backend, err := be.NewBackend(app.config.ServerAddr)
 
 	if err != nil {
 		return err
 	}
 
 	app.backend = backend
-	app.context.ServerAddress = serverAddr
 
 	return nil
 }
 
-func (app *App) loginUser(username string) error {
+func (app *App) loginUser() error {
 	loginRequest := &proto.LoginRequest{
-		Username: username,
+		Username: app.config.Username,
 	}
 
 	resp, err := app.backend.Login(loginRequest)
@@ -79,11 +84,74 @@ func (app *App) loginUser(username string) error {
 		return fmt.Errorf("failed to login: %s", err)
 	}
 
-	app.context.Username = username
-	app.context.ConnectionStatus = context.IsConnected
-	app.context.GameStatus = context.WaitingForPlayers
-	app.context.PopulateGameConfig(resp.GameConfig)
-	app.context.PopulatePlayerNames(resp.Players)
+	app.connStatus = status.Connected
+	app.gameStatus = status.WaitingForPlayers
+	app.players = resp.Players
+	app.populateGameConfig(resp.GameConfig)
 
 	return nil
+}
+
+func (app *App) runTui() error {
+	tea.LogToFile("debug.log", "debug")
+
+	go func() {
+		app.sendTuiConnStatusMsg()
+		app.sendTuiGameStatusMsg()
+		app.sendTuiPlayerJoinedMsg(app.config.Username)
+		app.sendTuiPlayerNamesMsg()
+	}()
+
+	if _, err := app.program.Run(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (app *App) sendTuiConnStatusMsg() {
+	msg := messages.ConnStatusMsg{Status: app.connStatus}
+	app.sendTuiMsg(msg)
+}
+
+func (app *App) sendTuiGameStatusMsg() {
+	msg := messages.GameStatusMsg{Status: app.gameStatus}
+	app.sendTuiMsg(msg)
+}
+
+func (app *App) sendTuiPlayerJoinedMsg(name string) {
+	msg := messages.PlayerJoinedMsg{Name: name}
+	app.sendTuiMsg(msg)
+}
+
+func (app *App) sendTuiPlayerNamesMsg() {
+	msg := messages.UpdatedPlayerNamesMsg{Names: app.getPlayerNames()}
+	app.sendTuiMsg(msg)
+}
+
+func (app *App) sendTuiMsg(msg tea.Msg) {
+	if app.program == nil {
+		return
+	}
+
+	log.Printf("sending tui a message %#v", msg)
+	app.program.Send(msg)
+}
+
+func (app *App) populateGameConfig(msg *proto.GameConfig) {
+	app.config.GameConfig.MaxPlayers = int(msg.MaxPlayers)
+	app.config.GameConfig.Rounds = int(msg.Rounds)
+	app.config.GameConfig.RoundDuration = int(msg.RoundSeconds)
+	app.config.GameConfig.Difficulty = config.GameDifficulty(msg.Difficulty)
+	app.config.GameConfig.FileSize = config.GameFileSize(msg.FileSize)
+}
+
+func (app *App) getPlayerNames() []string {
+	names := make([]string, 0, len(app.players))
+
+	for _, name := range app.players {
+		names = append(names, name.Username)
+	}
+
+	return names
 }

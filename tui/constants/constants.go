@@ -20,12 +20,12 @@ var FileSizeTextMap = map[config.GameFileSize]string{
 	config.FileBig:    "Large",
 }
 
-var StatusTextMap = map[status.GameStatus]string{
+var GameStatusTextMap = map[status.GameStatus]string{
 	status.Initializing:      "Initializing...",
 	status.WaitingForPlayers: "Waiting for players...",
 }
 
-var ConnectionTextMap = map[status.ConnStatus]string{
+var ConnStatusTextMap = map[status.ConnStatus]string{
 	status.Connecting:   "Connecting...",
 	status.Connected:    "Connected",
 	status.Disconnected: "Disconnected",
