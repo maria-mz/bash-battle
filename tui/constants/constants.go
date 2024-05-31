@@ -73,5 +73,5 @@ const (
 	ConfigLabelDifficulty    = "Difficulty"
 	ConfigLabelFileSize      = "File size"
 
-	ConfigTableTitle = "Config"
+	ConfigTableTitle = "Settings"
 )

@@ -20,8 +20,8 @@ const (
 type Tui struct {
 	activeView StateView
 
-	lobbyModel  lobby.Lobby
-	footerModel footer.Footer
+	lobby  lobby.Lobby
+	footer footer.Footer
 
 	termWidth  int
 	termHeight int
@@ -29,23 +29,23 @@ type Tui struct {
 
 func NewTui(conf config.Config) *Tui {
 	return &Tui{
-		activeView:  LobbyView,
-		lobbyModel:  lobby.New(conf),
-		footerModel: footer.New(conf),
+		activeView: LobbyView,
+		lobby:      lobby.New(conf),
+		footer:     footer.New(conf),
 	}
 }
 
 func (tui *Tui) Init() tea.Cmd {
 	return tea.Batch(
 		tea.SetWindowTitle(constants.WindowTitle),
-		tui.lobbyModel.Init(),
+		tui.lobby.Init(),
 	)
 }
 
 func (tui *Tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	log.Printf("handling new message %#v", msg)
 
-	var cmd tea.Cmd
+	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
 
@@ -53,7 +53,7 @@ func (tui *Tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		tui.termWidth = msg.Width
 		tui.termHeight = msg.Height
 
-		cmd = tui.updateAllViews(msg)
+		cmd := tui.updateAllViews(msg)
 		return tui, cmd
 
 	case tea.KeyMsg:
@@ -63,17 +63,17 @@ func (tui *Tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	}
 
-	cmd = tui.updateActiveView(msg)
-	tui.footerModel.Update(msg)
+	cmds = append(cmds, tui.updateActiveView(msg))
+	cmds = append(cmds, tui.footer.Update(msg))
 
-	return tui, cmd
+	return tui, tea.Batch(cmds...)
 }
 
 func (tui *Tui) updateAllViews(msg tea.Msg) tea.Cmd {
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
 
-	tui.lobbyModel, cmd = tui.lobbyModel.Update(msg)
+	tui.lobby, cmd = tui.lobby.Update(msg)
 	cmds = append(cmds, cmd)
 
 	return tea.Batch(cmds...)
@@ -84,7 +84,7 @@ func (tui *Tui) updateActiveView(msg tea.Msg) tea.Cmd {
 
 	switch tui.activeView {
 	case LobbyView:
-		tui.lobbyModel, cmd = tui.lobbyModel.Update(msg)
+		tui.lobby, cmd = tui.lobby.Update(msg)
 	}
 	return cmd
 }
@@ -94,12 +94,12 @@ func (m *Tui) View() string {
 
 	switch m.activeView {
 	case LobbyView:
-		mainView = m.lobbyModel.View()
+		mainView = m.lobby.View()
 	}
 
 	return lipgloss.JoinVertical(
 		lipgloss.Center,
 		mainView,
-		m.footerModel.View(m.termWidth),
+		m.footer.View(m.termWidth),
 	)
 }

@@ -12,6 +12,6 @@ func main() {
 	defer app.Shutdown()
 
 	if err := app.Run(); err != nil {
-		log.Fatalf("Failed to run run app %s", err)
+		log.Fatal(err)
 	}
 }
