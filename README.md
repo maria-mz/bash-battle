@@ -8,9 +8,8 @@ Here is what the starting screen, or lobby, looks like. (This is currently the o
 
 <img width="902" alt="lobby img" src="docs/lobby-img.png">
 
-### Note
-
-_The project is very much under development!_ I'm working on the gameplay aspect next.
+> [!NOTE]
+> _The project is very much under development!_ There is still a lot left to do. I'm working on the gameplay aspect next.
 
 ## Getting Started
 
@@ -18,7 +17,7 @@ TODO (once more is done)
 
 ## Motivation
 
-I wanted to create a fun environment to practice Bash, specifically file and text processing commands, with real examples. I was also looking for an opportunity to build a TUI with the fantastic [Bubble Tea](https://github.com/charmbracelet/bubbletea) framework. A TUI seemed like the perfect match, and so I began this project!
+I wanted a fun environment to practice Bash, specifically file and text processing commands, with real examples. I was also looking for an opportunity to build a TUI with the fantastic [Bubble Tea](https://github.com/charmbracelet/bubbletea) framework. A TUI seemed like the perfect match, and so I began this project!
 
 This project has allowed me to:
 - Practice writing Go, a new language for me
