@@ -31,6 +31,7 @@ func BorderedBoxWithTitle(style lipgloss.Style, content, title string) string {
 	boxLen := lipgloss.Width(box)
 
 	if minBorderTopLen > boxLen {
+		// TODO: add only enough padding to meet the min length
 		padding := minBorderTopLen - boxLen
 		// Add padding to right side so it meets the min length, and re-render
 		style = style.PaddingRight(style.GetHorizontalPadding() + padding)

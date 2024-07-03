@@ -6,7 +6,7 @@ require (
 	github.com/charmbracelet/bubbles v0.18.0
 	github.com/charmbracelet/bubbletea v0.26.1
 	github.com/charmbracelet/lipgloss v0.10.1-0.20240506202754-3ee5dcab73cb
-	github.com/maria-mz/bash-battle-proto v0.0.0-20240524001703-dddeda814a56
+	github.com/maria-mz/bash-battle-proto v0.0.0-20240623180313-5a2f693499c0
 	google.golang.org/grpc v1.64.0
 )
 

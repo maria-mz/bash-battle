@@ -9,6 +9,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 type ServerEvent interface{}
@@ -62,14 +63,38 @@ func (be *Backend) getAuthContext() context.Context {
 	return ctx
 }
 
-func (be *Backend) Login(request *proto.LoginRequest) (*proto.LoginResponse, error) {
-	resp, err := be.grpcClient.Login(context.Background(), request)
+func (be *Backend) Connect(request *proto.ConnectRequest) error {
+	resp, err := be.grpcClient.Connect(context.Background(), request)
 
-	if err == nil && resp.Error == nil {
+	if err == nil {
 		be.token = resp.Token
 	}
 
-	return resp, err
+	return err
+}
+
+func (be *Backend) JoinGame() error {
+	ctx := be.getAuthContext()
+
+	_, err := be.grpcClient.JoinGame(ctx, &emptypb.Empty{})
+
+	return err
+}
+
+func (be *Backend) GetGameConfig() (*proto.GameConfig, error) {
+	ctx := be.getAuthContext()
+
+	gameConfig, err := be.grpcClient.GetGameConfig(ctx, &emptypb.Empty{})
+
+	return gameConfig, err
+}
+
+func (be *Backend) GetPlayers() (*proto.Players, error) {
+	ctx := be.getAuthContext()
+
+	players, err := be.grpcClient.GetPlayers(ctx, &emptypb.Empty{})
+
+	return players, err
 }
 
 func (be *Backend) Stream() error {

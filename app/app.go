@@ -40,7 +40,19 @@ func (app *App) Run() error {
 		return err
 	}
 
-	if err := app.loginUser(); err != nil {
+	if err := app.connectUser(); err != nil {
+		return err
+	}
+
+	if err := app.joinGame(); err != nil {
+		return err
+	}
+
+	if err := app.populateGameConfig(); err != nil {
+		return err
+	}
+
+	if err := app.populatePlayers(); err != nil {
 		return err
 	}
 
@@ -73,21 +85,58 @@ func (app *App) initBackend() error {
 	return nil
 }
 
-func (app *App) loginUser() error {
-	loginRequest := &proto.LoginRequest{
+func (app *App) connectUser() error {
+	req := &proto.ConnectRequest{
 		Username: app.config.Username,
 	}
 
-	resp, err := app.backend.Login(loginRequest)
+	err := app.backend.Connect(req)
 
 	if err != nil {
-		return fmt.Errorf("failed to login: %s", err)
+		return fmt.Errorf("failed to connect: %s", err)
 	}
 
 	app.connStatus = status.Connected
+
+	return nil
+}
+
+func (app *App) joinGame() error {
+	err := app.backend.JoinGame()
+
+	if err != nil {
+		return fmt.Errorf("failed to join game: %s", err)
+	}
+
 	app.gameStatus = status.WaitingForPlayers
-	app.players = resp.Players
-	app.populateGameConfig(resp.GameConfig)
+
+	return nil
+}
+
+func (app *App) populateGameConfig() error {
+	gameConfig, err := app.backend.GetGameConfig()
+
+	if err != nil {
+		return fmt.Errorf("failed to get game config: %s", err)
+	}
+
+	app.config.GameConfig.MaxPlayers = int(gameConfig.MaxPlayers)
+	app.config.GameConfig.Rounds = int(gameConfig.Rounds)
+	app.config.GameConfig.RoundDuration = int(gameConfig.RoundSeconds)
+	app.config.GameConfig.Difficulty = config.GameDifficulty(gameConfig.Difficulty)
+	app.config.GameConfig.FileSize = config.GameFileSize(gameConfig.FileSize)
+
+	return nil
+}
+
+func (app *App) populatePlayers() error {
+	players, err := app.backend.GetPlayers()
+
+	if err != nil {
+		return fmt.Errorf("failed to get players: %s", err)
+	}
+
+	app.players = players.GetPlayers()
 
 	return nil
 }
@@ -136,14 +185,6 @@ func (app *App) sendTuiMsg(msg tea.Msg) {
 
 	log.Printf("sending tui a message %#v", msg)
 	app.program.Send(msg)
-}
-
-func (app *App) populateGameConfig(msg *proto.GameConfig) {
-	app.config.GameConfig.MaxPlayers = int(msg.MaxPlayers)
-	app.config.GameConfig.Rounds = int(msg.Rounds)
-	app.config.GameConfig.RoundDuration = int(msg.RoundSeconds)
-	app.config.GameConfig.Difficulty = config.GameDifficulty(msg.Difficulty)
-	app.config.GameConfig.FileSize = config.GameFileSize(msg.FileSize)
 }
 
 func (app *App) getPlayerNames() []string {
