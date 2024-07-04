@@ -2,8 +2,6 @@ package backend
 
 import (
 	"context"
-	"fmt"
-	"log/slog"
 
 	"github.com/maria-mz/bash-battle-proto/proto"
 	"google.golang.org/grpc"
@@ -12,15 +10,11 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
-type ServerEvent interface{}
-
 type Backend struct {
-	token            string
-	conn             *grpc.ClientConn
-	grpcClient       proto.BashBattleClient
-	stream           proto.BashBattle_StreamClient // NOTE: this is nil by default
-	ServerEventsChan chan ServerEvent
-	StreamEnded      chan bool
+	token      string
+	conn       *grpc.ClientConn
+	grpcClient proto.BashBattleClient
+	stream     *Stream
 }
 
 func NewBackend(serverAddr string) (*Backend, error) {
@@ -37,21 +31,18 @@ func NewBackend(serverAddr string) (*Backend, error) {
 	client := proto.NewBashBattleClient(conn)
 
 	return &Backend{
-		conn:             conn,
-		grpcClient:       client,
-		ServerEventsChan: make(chan ServerEvent),
-		StreamEnded:      make(chan bool),
+		conn:       conn,
+		grpcClient: client,
 	}, nil
 }
 
 func (be *Backend) Shutdown() {
-	// TODO: close channels (test)
 	if be.conn != nil {
 		be.conn.Close()
 	}
 
 	if be.stream != nil {
-		be.stream.CloseSend()
+		be.stream.Shutdown()
 	}
 }
 
@@ -98,33 +89,34 @@ func (be *Backend) GetPlayers() (*proto.Players, error) {
 }
 
 func (be *Backend) Stream() error {
+	// TODO: Return error if stream already active
 	ctx := be.getAuthContext()
 
-	stream, err := be.grpcClient.Stream(ctx)
+	streamClient, err := be.grpcClient.Stream(ctx)
 
 	if err != nil {
 		return err
 	}
 
-	be.stream = stream
+	be.stream = NewStream(streamClient)
 
-	go be.recvStream()
+	go be.stream.Recv()
 
-	return nil
+	endStreamMsg := <-be.stream.EndStreamMsgs // Blocking
+
+	return endStreamMsg.Err
 }
 
-func (be *Backend) recvStream() {
-	for {
-		event, err := be.stream.Recv()
+func (be *Backend) SendRoundLoadedAck() {
+	ack := BuildRoundLoadedAck()
+	be.stream.SendAck(ack)
+}
 
-		if err != nil {
-			slog.Error("failed to receive from game stream")
-			// be.StreamEnded <- true
-			return
-		}
+func (be *Backend) SendScoreSubmissionAck(roundStats *proto.RoundStats) {
+	ack := BuildRoundSubmissionAck(roundStats)
+	be.stream.SendAck(ack)
+}
 
-		slog.Info(fmt.Sprintf("received event!!! %+v", event))
-
-		// be.ServerEventsChan <- event
-	}
+func (be *Backend) GetServerEvents() <-chan *proto.Event {
+	return be.stream.ServerEvents
 }
